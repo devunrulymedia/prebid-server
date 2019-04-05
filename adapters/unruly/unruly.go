@@ -39,8 +39,7 @@ func NewUnrulyBidder(client *http.Client, endpoint string) *UnrulyAdapter {
 
 func (a *UnrulyAdapter) ReplaceImp(imp openrtb.Imp, request *openrtb.BidRequest) *openrtb.BidRequest {
 	reqCopy := *request
-	reqCopy.Imp = []openrtb.Imp{}
-	reqCopy.Imp = append(reqCopy.Imp, imp)
+	reqCopy.Imp = append(make([]openrtb.Imp, 0, 1), imp)
 	return &reqCopy
 }
 
@@ -65,4 +64,20 @@ func (a *UnrulyAdapter) BuildRequest(request *openrtb.BidRequest) (*adapters.Req
 		Body:    reqJSON,
 		Headers: headers,
 	}, errs
+}
+
+func (a *UnrulyAdapter) MakeRequests(request *openrtb.BidRequest) ([]*adapters.RequestData, []error) {
+	var errs []error
+	var adapterRequests []*adapters.RequestData
+	for _, imp := range request.Imp {
+		newRequest := a.ReplaceImp(imp, request)
+		if a.CheckImpExtension(newRequest) {
+			adapterReq, errors := a.BuildRequest(newRequest)
+			if adapterReq != nil {
+				adapterRequests = append(adapterRequests, adapterReq)
+			}
+			errs = append(errs, errors...)
+		}
+	}
+	return adapterRequests, errs
 }
