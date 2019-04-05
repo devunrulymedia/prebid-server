@@ -90,3 +90,34 @@ func TestCheckImpExtensionWithBadInput(t *testing.T) {
 		t.Errorf("actual = %v expected = %v", actual, expected)
 	}
 }
+func TestMakeRequests(t *testing.T) {
+	adapter := UnrulyAdapter{URI: "http://mockEndpoint.com"}
+
+	imp1 := openrtb.Imp{ID: "hello1", Ext: json.RawMessage(`{"bidder1": {}}`)}
+	imp2 := openrtb.Imp{ID: "hello2", Ext: json.RawMessage(`{"bidder2": {}}`)}
+	imp3 := openrtb.Imp{ID: "hello3", Ext: json.RawMessage(`{"bidder3": {}}`)}
+
+	imps := []openrtb.Imp{imp1, imp2, imp3}
+
+	inputRequest := openrtb.BidRequest{Imp: []openrtb.Imp{imp1, imp2, imp3}}
+	actualAdapterRequests, _ := adapter.MakeRequests(&inputRequest)
+	mockHeaders := http.Header{}
+	mockHeaders.Add("Content-Type", "application/json;charset=utf-8")
+	mockHeaders.Add("Accept", "application/json")
+	if len(actualAdapterRequests) != 3 {
+		t.Errorf("should have 3 imps")
+	}
+	for n, imp := range imps {
+		request := openrtb.BidRequest{Imp: []openrtb.Imp{imp}}
+		expectedJson, _ := json.Marshal(request)
+		data := adapters.RequestData{
+			Method:  "POST",
+			Uri:     "http://mockEndpoint.com",
+			Body:    expectedJson,
+			Headers: mockHeaders,
+		}
+		if !reflect.DeepEqual(data, *actualAdapterRequests[n]) {
+			t.Errorf("actual = %v expected = %v", *actualAdapterRequests[0], data)
+		}
+	}
+}
