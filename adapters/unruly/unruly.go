@@ -37,17 +37,25 @@ func NewUnrulyBidder(client *http.Client, endpoint string) *UnrulyAdapter {
 	}
 }
 
-func (a *UnrulyAdapter) makeRequest(request *openrtb.BidRequest) (*adapters.RequestData, []error) {
+func (a *UnrulyAdapter) ReplaceImp(imp openrtb.Imp, request *openrtb.BidRequest) *openrtb.BidRequest {
+	reqCopy := *request
+	reqCopy.Imp = []openrtb.Imp{}
+	reqCopy.Imp = append(reqCopy.Imp, imp)
+	return &reqCopy
+}
 
+func (a *UnrulyAdapter) CheckImpExtension(request *openrtb.BidRequest) bool {
+	var bidderExt adapters.ExtImpBidder
+	return json.Unmarshal(request.Imp[0].Ext, &bidderExt) == nil
+}
+
+func (a *UnrulyAdapter) BuildRequest(request *openrtb.BidRequest) (*adapters.RequestData, []error) {
 	var errs []error
-
 	reqJSON, err := json.Marshal(request)
-
 	if err != nil {
 		errs = append(errs, err)
 		return nil, errs
 	}
-
 	headers := http.Header{}
 	headers.Add("Content-Type", "application/json;charset=utf-8")
 	headers.Add("Accept", "application/json")
