@@ -2,8 +2,11 @@ package unruly
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/mxmCherry/openrtb"
 	"github.com/prebid/prebid-server/adapters"
+	"github.com/prebid/prebid-server/errortypes"
+	"github.com/prebid/prebid-server/openrtb_ext"
 	"net/http"
 	"reflect"
 	"testing"
@@ -44,10 +47,10 @@ func TestBuildRequest(t *testing.T) {
 }
 
 func TestReplaceImp(t *testing.T) {
-	imp1 := openrtb.Imp{ID: "hello1"}
-	imp2 := openrtb.Imp{ID: "hello2"}
-	imp3 := openrtb.Imp{ID: "hello3"}
-	newImp := openrtb.Imp{ID: "hello4"}
+	imp1 := openrtb.Imp{ID: "imp1"}
+	imp2 := openrtb.Imp{ID: "imp2"}
+	imp3 := openrtb.Imp{ID: "imp3"}
+	newImp := openrtb.Imp{ID: "imp4"}
 	request := openrtb.BidRequest{Imp: []openrtb.Imp{imp1, imp2, imp3}}
 	adapter := UnrulyAdapter{URI: "http://mockEndpoint.com"}
 	newRequest := adapter.ReplaceImp(newImp, &request)
@@ -93,9 +96,9 @@ func TestCheckImpExtensionWithBadInput(t *testing.T) {
 func TestMakeRequests(t *testing.T) {
 	adapter := UnrulyAdapter{URI: "http://mockEndpoint.com"}
 
-	imp1 := openrtb.Imp{ID: "hello1", Ext: json.RawMessage(`{"bidder1": {}}`)}
-	imp2 := openrtb.Imp{ID: "hello2", Ext: json.RawMessage(`{"bidder2": {}}`)}
-	imp3 := openrtb.Imp{ID: "hello3", Ext: json.RawMessage(`{"bidder3": {}}`)}
+	imp1 := openrtb.Imp{ID: "imp1", Ext: json.RawMessage(`{"bidder1": {}}`)}
+	imp2 := openrtb.Imp{ID: "imp2", Ext: json.RawMessage(`{"bidder2": {}}`)}
+	imp3 := openrtb.Imp{ID: "imp3", Ext: json.RawMessage(`{"bidder3": {}}`)}
 
 	imps := []openrtb.Imp{imp1, imp2, imp3}
 
@@ -120,4 +123,55 @@ func TestMakeRequests(t *testing.T) {
 			t.Errorf("actual = %v expected = %v", *actualAdapterRequests[0], data)
 		}
 	}
+}
+
+func TestGetMediaTypeForImpIsBanner(t *testing.T) {
+	testID := string("1234")
+	testBidMediaType := openrtb_ext.BidTypeBanner
+	imp := openrtb.Imp{
+		ID: testID,
+		Banner: &openrtb.Banner{
+			Format: []openrtb.Format{{W: 320, H: 50}},
+		},
+	}
+	imps := []openrtb.Imp{imp}
+	actual, _ := getMediaTypeForImpWithId(testID, imps)
+	if actual != testBidMediaType {
+		t.Errorf("actual = %v expected = %v", actual, testBidMediaType)
+	}
+}
+
+func TestGetMediaTypeForImpIsVideo(t *testing.T) {
+	testID := string("4321")
+	testBidMediaType := openrtb_ext.BidTypeVideo
+	imp := openrtb.Imp{
+		ID:    testID,
+		Video: &openrtb.Video{},
+	}
+	imps := []openrtb.Imp{imp}
+	actual, _ := getMediaTypeForImpWithId(testID, imps)
+
+	if actual != "video" {
+		t.Errorf("actual = %v expected = %v", actual, testBidMediaType)
+	}
+}
+
+func TestGetMediaTypeForImpWithNoIDPresent(t *testing.T) {
+	imp := openrtb.Imp{
+		ID:    "4321",
+		Video: &openrtb.Video{},
+	}
+	imps := []openrtb.Imp{imp}
+	_, err := getMediaTypeForImpWithId("1234", imps)
+	expected := &errortypes.BadInput{
+		Message: fmt.Sprintf("Failed to find impression \"%s\" ", "1234"),
+	}
+	if !reflect.DeepEqual(expected, err) {
+		t.Errorf("actual = %v expected = %v", expected, err)
+	}
+
+}
+
+func TestGetResponse(t *testing.T) {
+
 }
