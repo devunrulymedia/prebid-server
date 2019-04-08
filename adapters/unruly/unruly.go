@@ -2,8 +2,11 @@ package unruly
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/mxmCherry/openrtb"
 	"github.com/prebid/prebid-server/adapters"
+	"github.com/prebid/prebid-server/errortypes"
+	"github.com/prebid/prebid-server/openrtb_ext"
 	"net/http"
 )
 
@@ -80,4 +83,32 @@ func (a *UnrulyAdapter) MakeRequests(request *openrtb.BidRequest) ([]*adapters.R
 		}
 	}
 	return adapterRequests, errs
+}
+
+//func (a *UnrulyAdapter) MakeBids(internalRequest *openrtb.BidRequest, externalRequest *adapters.RequestData, response *adapters.ResponseData) (*adapters.BidderResponse, []error) {
+//
+//}
+
+func getMediaTypeForImpWithId(impID string, imps []openrtb.Imp) (openrtb_ext.BidType, error) {
+	for _, imp := range imps {
+		if imp.ID == impID {
+			if imp.Banner != nil {
+				return openrtb_ext.BidTypeBanner, nil
+			} else {
+				return openrtb_ext.BidTypeVideo, nil
+			}
+		}
+	}
+	return "", &errortypes.BadInput{
+		Message: fmt.Sprintf("Failed to find impression \"%s\" ", impID),
+	}
+}
+
+func CheckResponse(response *adapters.ResponseData) error {
+	if response.StatusCode != http.StatusOK {
+		return &errortypes.BadServerResponse{
+			Message: fmt.Sprintf("Unexpected status code: %d. Run with request.debug = 1 for more info", response.StatusCode),
+		}
+	}
+	return nil
 }
