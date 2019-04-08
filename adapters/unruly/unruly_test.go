@@ -169,9 +169,4 @@ func TestGetMediaTypeForImpWithNoIDPresent(t *testing.T) {
 	if !reflect.DeepEqual(expected, err) {
 		t.Errorf("actual = %v expected = %v", expected, err)
 	}
-
-}
-
-func TestGetResponse(t *testing.T) {
-
 }
