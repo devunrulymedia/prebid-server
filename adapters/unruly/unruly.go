@@ -85,10 +85,6 @@ func (a *UnrulyAdapter) MakeRequests(request *openrtb.BidRequest) ([]*adapters.R
 	return adapterRequests, errs
 }
 
-//func (a *UnrulyAdapter) MakeBids(internalRequest *openrtb.BidRequest, externalRequest *adapters.RequestData, response *adapters.ResponseData) (*adapters.BidderResponse, []error) {
-//
-//}
-
 func getMediaTypeForImpWithId(impID string, imps []openrtb.Imp) (openrtb_ext.BidType, error) {
 	for _, imp := range imps {
 		if imp.ID == impID {
@@ -111,4 +107,35 @@ func CheckResponse(response *adapters.ResponseData) error {
 		}
 	}
 	return nil
+}
+
+func convertToAdapterBidResponse(response *adapters.ResponseData, internalRequest *openrtb.BidRequest) (*adapters.BidderResponse, []error) {
+	var errs []error
+	var bidResp openrtb.BidResponse
+	if err := json.Unmarshal(response.Body, &bidResp); err != nil {
+		return nil, []error{err}
+	}
+	bidResponse := adapters.NewBidderResponseWithBidsCapacity(5)
+	for _, sb := range bidResp.SeatBid {
+		for i := range sb.Bid {
+			bidType, err := getMediaTypeForImpWithId(sb.Bid[i].ImpID, internalRequest.Imp)
+			if err != nil {
+				errs = append(errs, err)
+			} else {
+				b := &adapters.TypedBid{
+					Bid:     &sb.Bid[i],
+					BidType: bidType,
+				}
+				bidResponse.Bids = append(bidResponse.Bids, b)
+			}
+		}
+	}
+	return bidResponse, errs
+}
+
+func (a *UnrulyAdapter) MakeBids(internalRequest *openrtb.BidRequest, externalRequest *adapters.RequestData, response *adapters.ResponseData) (*adapters.BidderResponse, []error) {
+	if err := CheckResponse(response); err != nil {
+		return nil, []error{err}
+	}
+	return convertToAdapterBidResponse(response, internalRequest)
 }
