@@ -70,7 +70,7 @@ func TestReplaceImp(t *testing.T) {
 func TestCheckImpExtension(t *testing.T) {
 	adapter := UnrulyAdapter{URI: "http://mockEndpoint.com"}
 
-	imp := openrtb.Imp{Ext: json.RawMessage(`{"bidder": {}}`)}
+	imp := openrtb.Imp{Ext: json.RawMessage(`{"uuid": "1234", "siteid": "aSiteID"}`)}
 	request := openrtb.BidRequest{Imp: []openrtb.Imp{imp}}
 
 	actual := adapter.CheckImpExtension(&request)
