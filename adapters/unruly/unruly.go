@@ -58,15 +58,21 @@ func (a *UnrulyAdapter) BuildRequest(request *openrtb.BidRequest) (*adapters.Req
 		errs = append(errs, err)
 		return nil, errs
 	}
-	headers := http.Header{}
-	headers.Add("Content-Type", "application/json;charset=utf-8")
-	headers.Add("Accept", "application/json")
+
 	return &adapters.RequestData{
 		Method:  "POST",
 		Uri:     a.URI,
 		Body:    reqJSON,
-		Headers: headers,
+		Headers: AddHeadersToRequest(),
 	}, errs
+}
+
+func AddHeadersToRequest() http.Header {
+	headers := http.Header{}
+	headers.Add("Content-Type", "application/json;charset=utf-8")
+	headers.Add("Accept", "application/json")
+	headers.Add("X-Unruly-Origin", "Ozone")
+	return headers
 }
 
 func (a *UnrulyAdapter) MakeRequests(request *openrtb.BidRequest) ([]*adapters.RequestData, []error) {
@@ -112,6 +118,7 @@ func CheckResponse(response *adapters.ResponseData) error {
 func convertToAdapterBidResponse(response *adapters.ResponseData, internalRequest *openrtb.BidRequest) (*adapters.BidderResponse, []error) {
 	var errs []error
 	var bidResp openrtb.BidResponse
+	fmt.Println(bidResp.SeatBid, "Seat Bid")
 	if err := json.Unmarshal(response.Body, &bidResp); err != nil {
 		return nil, []error{err}
 	}

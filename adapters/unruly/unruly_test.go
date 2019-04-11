@@ -29,6 +29,7 @@ func TestBuildRequest(t *testing.T) {
 	mockHeaders := http.Header{}
 	mockHeaders.Add("Content-Type", "application/json;charset=utf-8")
 	mockHeaders.Add("Accept", "application/json")
+	mockHeaders.Add("X-Unruly-Origin", "Ozone")
 	data := adapters.RequestData{
 		Method:  "POST",
 		Uri:     "http://mockEndpoint.com",
@@ -107,6 +108,7 @@ func TestMakeRequests(t *testing.T) {
 	mockHeaders := http.Header{}
 	mockHeaders.Add("Content-Type", "application/json;charset=utf-8")
 	mockHeaders.Add("Accept", "application/json")
+	mockHeaders.Add("X-Unruly-Origin", "Ozone")
 	if len(actualAdapterRequests) != 3 {
 		t.Errorf("should have 3 imps")
 	}
@@ -168,5 +170,41 @@ func TestGetMediaTypeForImpWithNoIDPresent(t *testing.T) {
 	}
 	if !reflect.DeepEqual(expected, err) {
 		t.Errorf("actual = %v expected = %v", expected, err)
+	}
+}
+
+func TestConvertToAdapterBidResponseHasCorrectNumberOfBids(t *testing.T) {
+	imp := openrtb.Imp{
+		ID:    "1234",
+		Video: &openrtb.Video{},
+	}
+	imp2 := openrtb.Imp{
+		ID:    "1235",
+		Video: &openrtb.Video{},
+	}
+
+	mockResponse := adapters.ResponseData{StatusCode: 200,
+		Body: json.RawMessage(`{"seatbid":[{"bid":[{"impid":"1234"}]},{"bid":[{"impid":"1235"}]}]}`)}
+	internalRequest := openrtb.BidRequest{Imp: []openrtb.Imp{imp, imp2}}
+	mockBidResponse := adapters.NewBidderResponseWithBidsCapacity(5)
+
+	typedBid := &adapters.TypedBid{
+		Bid:     &openrtb.Bid{ImpID: "1234"},
+		BidType: "Video",
+	}
+	typedBid2 := &adapters.TypedBid{
+		Bid:     &openrtb.Bid{ImpID: "1235"},
+		BidType: "Video",
+	}
+
+	mockBidResponse.Bids = append(mockBidResponse.Bids, typedBid)
+	mockBidResponse.Bids = append(mockBidResponse.Bids, typedBid2)
+
+	actual, _ := convertToAdapterBidResponse(&mockResponse, &internalRequest)
+	if !reflect.DeepEqual(*actual.Bids[0].Bid, *mockBidResponse.Bids[0].Bid) {
+		t.Errorf("actual = %v expected = %v", *actual.Bids[0].Bid, *mockBidResponse.Bids[0].Bid)
+	}
+	if !reflect.DeepEqual(*actual.Bids[1].Bid, *mockBidResponse.Bids[1].Bid) {
+		t.Errorf("actual = %v expected = %v", *actual.Bids[1].Bid, *mockBidResponse.Bids[1].Bid)
 	}
 }
