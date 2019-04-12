@@ -70,7 +70,7 @@ func TestReplaceImp(t *testing.T) {
 func TestCheckImpExtension(t *testing.T) {
 	adapter := UnrulyAdapter{URI: "http://mockEndpoint.com"}
 
-	imp := openrtb.Imp{Ext: json.RawMessage(`{"uuid": "1234", "siteid": "aSiteID"}`)}
+	imp := openrtb.Imp{Ext: json.RawMessage(`{"bidder": {"uuid": "1234", "siteid": "aSiteID"}}`)}
 	request := openrtb.BidRequest{Imp: []openrtb.Imp{imp}}
 
 	actual := adapter.CheckImpExtension(&request)
@@ -97,9 +97,9 @@ func TestCheckImpExtensionWithBadInput(t *testing.T) {
 func TestMakeRequests(t *testing.T) {
 	adapter := UnrulyAdapter{URI: "http://mockEndpoint.com"}
 
-	imp1 := openrtb.Imp{ID: "imp1", Ext: json.RawMessage(`{"bidder1": {}}`)}
-	imp2 := openrtb.Imp{ID: "imp2", Ext: json.RawMessage(`{"bidder2": {}}`)}
-	imp3 := openrtb.Imp{ID: "imp3", Ext: json.RawMessage(`{"bidder3": {}}`)}
+	imp1 := openrtb.Imp{ID: "imp1", Ext: json.RawMessage(`{"bidder": {"uuid": "uuid1", "siteid": "siteID1"}}`)}
+	imp2 := openrtb.Imp{ID: "imp2", Ext: json.RawMessage(`{"bidder": {"uuid": "uuid2", "siteid": "siteID2"}}`)}
+	imp3 := openrtb.Imp{ID: "imp3", Ext: json.RawMessage(`{"bidder": {"uuid": "uuid3", "siteid": "siteID3"}}`)}
 
 	imps := []openrtb.Imp{imp1, imp2, imp3}
 
