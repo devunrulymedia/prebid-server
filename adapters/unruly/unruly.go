@@ -123,7 +123,6 @@ func CheckResponse(response *adapters.ResponseData) error {
 func convertToAdapterBidResponse(response *adapters.ResponseData, internalRequest *openrtb.BidRequest) (*adapters.BidderResponse, []error) {
 	var errs []error
 	var bidResp openrtb.BidResponse
-	fmt.Println(bidResp.SeatBid, "Seat Bid")
 	if err := json.Unmarshal(response.Body, &bidResp); err != nil {
 		return nil, []error{err}
 	}
