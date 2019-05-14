@@ -29,7 +29,7 @@ func TestBuildRequest(t *testing.T) {
 	mockHeaders := http.Header{}
 	mockHeaders.Add("Content-Type", "application/json;charset=utf-8")
 	mockHeaders.Add("Accept", "application/json")
-	mockHeaders.Add("X-Unruly-Origin", "Ozone")
+	mockHeaders.Add("X-Unruly-Origin", "Prebid-Server")
 	data := adapters.RequestData{
 		Method:  "POST",
 		Uri:     "http://mockEndpoint.com",
@@ -137,7 +137,7 @@ func TestMakeRequests(t *testing.T) {
 	mockHeaders := http.Header{}
 	mockHeaders.Add("Content-Type", "application/json;charset=utf-8")
 	mockHeaders.Add("Accept", "application/json")
-	mockHeaders.Add("X-Unruly-Origin", "Ozone")
+	mockHeaders.Add("X-Unruly-Origin", "Prebid-Server")
 	if len(actualAdapterRequests) != 3 {
 		t.Errorf("should have 3 imps")
 	}
