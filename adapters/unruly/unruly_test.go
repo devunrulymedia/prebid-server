@@ -67,6 +67,31 @@ func TestReplaceImp(t *testing.T) {
 	}
 }
 
+func TestConvertBidderNameInExt(t *testing.T) {
+	imp := openrtb.Imp{Ext: json.RawMessage(`{"bidder": {"uuid": "1234", "siteid": "aSiteID"}}`)}
+
+	actualImp, err := convertBidderNameInExt(&imp)
+
+	if err != nil {
+		t.Errorf("actual = %v expected = %v", err, nil)
+	}
+
+	var unrulyExt ImpExtUnruly
+	err = json.Unmarshal(actualImp.Ext, &unrulyExt)
+
+	if err != nil {
+		t.Errorf("actual = %v expected = %v", err, nil)
+	}
+
+	if unrulyExt.Unruly.UUID != "1234" {
+		t.Errorf("actual = %v expected = %v", unrulyExt.Unruly.UUID, "1234")
+	}
+
+	if unrulyExt.Unruly.SiteID != "aSiteID" {
+		t.Errorf("actual = %v expected = %v", unrulyExt.Unruly.SiteID, "aSiteID")
+	}
+}
+
 func TestCheckImpExtension(t *testing.T) {
 	adapter := UnrulyAdapter{URI: "http://mockEndpoint.com"}
 
@@ -101,7 +126,11 @@ func TestMakeRequests(t *testing.T) {
 	imp2 := openrtb.Imp{ID: "imp2", Ext: json.RawMessage(`{"bidder": {"uuid": "uuid2", "siteid": "siteID2"}}`)}
 	imp3 := openrtb.Imp{ID: "imp3", Ext: json.RawMessage(`{"bidder": {"uuid": "uuid3", "siteid": "siteID3"}}`)}
 
-	imps := []openrtb.Imp{imp1, imp2, imp3}
+	expectImp1 := openrtb.Imp{ID: "imp1", Ext: json.RawMessage(`{"unruly": {"uuid": "uuid1", "siteid": "siteID1"}}`)}
+	expectImp2 := openrtb.Imp{ID: "imp2", Ext: json.RawMessage(`{"unruly": {"uuid": "uuid2", "siteid": "siteID2"}}`)}
+	expectImp3 := openrtb.Imp{ID: "imp3", Ext: json.RawMessage(`{"unruly": {"uuid": "uuid3", "siteid": "siteID3"}}`)}
+
+	expectImps := []openrtb.Imp{expectImp1, expectImp2, expectImp3}
 
 	inputRequest := openrtb.BidRequest{Imp: []openrtb.Imp{imp1, imp2, imp3}}
 	actualAdapterRequests, _ := adapter.MakeRequests(&inputRequest)
@@ -112,7 +141,7 @@ func TestMakeRequests(t *testing.T) {
 	if len(actualAdapterRequests) != 3 {
 		t.Errorf("should have 3 imps")
 	}
-	for n, imp := range imps {
+	for n, imp := range expectImps {
 		request := openrtb.BidRequest{Imp: []openrtb.Imp{imp}}
 		expectedJson, _ := json.Marshal(request)
 		data := adapters.RequestData{
