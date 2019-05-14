@@ -76,7 +76,7 @@ func AddHeadersToRequest() http.Header {
 	headers := http.Header{}
 	headers.Add("Content-Type", "application/json;charset=utf-8")
 	headers.Add("Accept", "application/json")
-	headers.Add("X-Unruly-Origin", "Ozone")
+	headers.Add("X-Unruly-Origin", "Prebid-Server")
 	return headers
 }
 
